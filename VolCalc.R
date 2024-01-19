@@ -8,23 +8,31 @@ args = commandArgs(trailingOnly=TRUE)
 
 #Volume calculations 
 df <- read_excel(args[1])
+headspace_mean <- rowMeans(df[,c("Headspace1_cm", "Headspace2_cm","Headspace3_cm","Headspace4_cm")], na.rm=TRUE)
+extension_cm <- df$Extension_ft*30.48
+chamber_Height<- extension_cm+7.62+headspace_mean 
 rad <- df["Chamber_Radius"]
 baseArea <- pi*rad**2
-ChamberVolCm3 <- baseArea*df$Chamber_Height
+ChamberVolCm3 <- baseArea*chamber_Height
 ChamberVolL <- ChamberVolCm3/1000
 BaseAreaM3 <- baseArea/10000
 VolAreaRatio <- ChamberVolL /BaseAreaM3 
-df2 <- cbind(df, ChamberVolCm3,ChamberVolL,baseArea,BaseAreaM3,VolAreaRatio)
-colnames(df2)<- c("Plot","Lid_Length","Headspace","Extension_Length","Net_Chamber_Height","Chamber_Radius","Total_Volume_cm3","Total_Volume_L","Base_Area","Base_Area_m3","Volume/BaseArea")
+
+
+df2 <- cbind(df,headspace_mean,extension_cm,chamber_Height, ChamberVolCm3,ChamberVolL,baseArea,BaseAreaM3,VolAreaRatio)
+
+colnames(df2)<- c("Std_CH4_Peak","Std_N2O_Peak","Std_CH4_PPM","Std_N2O_PPM","CH4_Sample_Peak","N2O_Sample_Peak","Sample_Type","GC_Run","Date","Plot","Time","Chamber_Temp_C","Headspace1_cm","Headspace2_cm","Headspace3_cm","Headspace4_cm","Extension_ft","Chamber_Radius","HeadspaceMean_cm","Extension_cm","Chamber_Height","Total_Volume_cm3","Total_Volume_L","Base_Area","Base_Area_m3","VolumeRatio")
+
+
 write_xlsx(df2,file.path(getwd(), "VolumeExport.xlsx"))
 
 
 
-callibration_df <-read_excel(args[2])
+#callibration_df <-read_excel(args[2])
 #callibration_df
 #generating linear relation
-CH4model <- lm(formula =CH4_PPM ~ CH4_Peak, data=callibration_df)
-N2Omodel <- lm(formula =N2O_PPM ~ N2O_Peak, data=callibration_df)
+CH4model <- lm(formula =Std_CH4_PPM ~ Std_CH4_Peak, data=df)
+N2Omodel <- lm(formula =Std_N2O_PPM ~ Std_N2O_Peak, data=df)
 CH4_c <- CH4model$coefficients[1]
 CH4_m <- CH4model$coefficients[2]
 CH4_r2 <- summary(CH4model)$r.squared
@@ -36,21 +44,21 @@ N2O_c <- N2Omodel$coefficients[1]
 N2O_m <- N2Omodel$coefficients[2]
 
 #getting output values from linear relation 
-CH4_Output <-CH4_m*callibration_df["CH4_Input"]+CH4_c
-N2O_Output <-N2O_m*callibration_df["N2O_Input"]+N2O_c
+CH4_Output <-CH4_m*df["CH4_Sample_Peak"]+CH4_c
+N2O_Output <-N2O_m*df["N2O_Sample_Peak"]+N2O_c
 
 
 
 #generating both curves 
-plot(x = callibration_df$CH4_Peak,                          
-     y = callibration_df$CH4_PPM,
+plot(x = df$Std_CH4_Peak,                          
+     y = df$Std_CH4_PPM,
      type = "o",
      xlab = "CH4 Peak",
      ylab = "CH4 PPM",
      main = "CH4 Callibration Curve")
 abline(b = 1, a = 0) 
-plot(x = callibration_df$N2O_Peak, # True values on x-axis
-     y = callibration_df$N2O_PPM,
+plot(x = df$Std_N2O_Peak, # True values on x-axis
+     y = df$Std_N2O_PPM,
      type = "o",
      xlab = "N2O Peak",
      ylab = "N2O PPM",
@@ -63,38 +71,37 @@ N2O_Vol <-(((760*22.4)*(273+N2O_Output))/(760*273))
 N2O_Conc <- ((N2O_Output/N2O_Vol*(0.044014)))
 
 CH4_Vol <-(((760*22.4)*(273+CH4_Output))/(760*273))
-CH4_Conc <- ((CH4_Output/CH4_Vol*(0.044014)))
+CH4_Conc <- ((CH4_Output/CH4_Vol*(0.016043)))
 
 
               
-df_out <- cbind(callibration_df, CH4_Output,N2O_Output,N2O_Vol,N2O_Conc,CH4_Vol,CH4_Conc)
+df_out <- cbind(df2, CH4_Output,N2O_Output,N2O_Vol,N2O_Conc,CH4_Vol,CH4_Conc)
 
-colnames(df_out)[18] <- "CH4_Output"
-colnames(df_out)[19] <- "N2O_Output"
-colnames(df_out)[20] <- "N2O_Volume"
-colnames(df_out)[21] <- "N2O_Concentration"
-colnames(df_out)[22] <- "CH4_Volume"
-colnames(df_out)[23] <- "CH4_Concentration"
+colnames(df_out)[27] <- "CH4_Output"
+colnames(df_out)[28] <- "N2O_Output"
+colnames(df_out)[29] <- "N2O_Volume"
+colnames(df_out)[30] <- "N2O_Concentration"
+colnames(df_out)[31] <- "CH4_Volume"
+colnames(df_out)[32] <- "CH4_Concentration"
 write_xlsx(df_out,file.path(getwd(), "MainExport.xlsx"))
 
-CH4Conc <- df_out[23]
-N20Conc <- df_out[21]
-Plot <- df_out[11]
+CH4Conc <- df_out["CH4_Concentration"]
+N20Conc <- df_out["N2O_Concentration"]
+Plot <- df_out["Plot"]
+Date <- df_out["Date"]
+VolumeRatio <- df_out["VolumeRatio"]
 
-fluxna <- data.frame(N20Conc, CH4Conc,Plot)
 
-
-
+fluxna <- data.frame(N20Conc, CH4Conc,Plot,Date,VolumeRatio)
 flux <- fluxna[!is.na(fluxna$Plot),]
 colnames(flux)[1] <- "N20Conc"
 colnames(flux)[2] <- "CH4Conc"
 
 
-
 counter = 0
 
-results = data.frame(matrix(ncol = 11, nrow = 0))
-colnames(results) = c("Plot","N20Detection","CH4Detection","N20_Rsq","CH4_Rsq","N20_Linearity","CH4_Linearity","N20_Slope","CH4_Slope","N20_Flux","CH4_Flux")
+results = data.frame(matrix(ncol = 12, nrow = 0))
+colnames(results) = c("Plot","Date","N20Detection","CH4Detection","N20_Rsq","CH4_Rsq","N20_Linearity","CH4_Linearity","N20_Slope","CH4_Slope","N20_Flux","CH4_Flux")
 leftboundN = 0 
 leftboundC = 0 
 Nres = "PASS"
@@ -106,22 +113,14 @@ vectorC <- c()
 
 time <- c(0,21,42,63)
 
-
-
-
 for (row in 1:nrow(flux)) {
   vectorN <- c(vectorN, flux[row, "N20Conc"])
   vectorC <- c(vectorC, flux[row, "CH4Conc"])
- 
-  
-  
   
   if ( counter ==0 ){
     leftboundN = flux[row, "N20Conc"]
     leftboundC = flux[row, "CH4Conc"]
-  #  print(flux[row, "N20Conc"])
-    
- #   print(flux[row, "Plot"])
+
   }
   
   if ( counter ==3 ){
@@ -161,13 +160,28 @@ for (row in 1:nrow(flux)) {
     }
     
     plotno <- flux[row, "Plot"]
+    dateno <- format(flux[row, "Date"])
+   
+    volumeratio <-flux[row,"VolumeRatio"]
     
-    VolRatio<-df2[df2[1]==plotno][11]
     
-    Cflux <- Cgrad*VolRatio
-    Nflux <- Ngrad*VolRatio
+  
+   
+  
+    Cflux <- Cgrad*volumeratio*240*60
+    Nflux <- Ngrad*volumeratio*240*60
     
-    results[nrow(results) + 1,] = c(flux[row, "Plot"],Nres,Cres,Nrsq,Crsq,NLin,CLin,Ngrad,Cgrad,Nflux,Cflux)
+    
+
+    results[nrow(results) + 1,] = c(plotno,dateno,Nres,Cres,Nrsq,Crsq,NLin,CLin,Ngrad,Cgrad,Nflux,Cflux)
+
+    
+    
+  
+    
+    
+    
+ 
 
     vectorN <- c()
     vectorC <- c()
@@ -185,8 +199,13 @@ for (row in 1:nrow(flux)) {
   
 }
 
-results
 
+
+
+
+
+
+write_xlsx(results,file.path(getwd(), "Results.xlsx"))
 
 
 
