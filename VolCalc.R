@@ -104,6 +104,36 @@ results = data.frame(matrix(ncol = 12, nrow = 0))
 colnames(results) = c("Plot","Date","N20Detection","CH4Detection","N20_Rsq","CH4_Rsq","N20_Linearity","CH4_Linearity","N20_Slope","CH4_Slope","N20_Flux","CH4_Flux")
 leftboundN = 0 
 leftboundC = 0 
+
+n1=0
+n2=0
+n3=0
+n4=0
+
+c1=0
+c2=0
+c3=0
+c4=0
+
+firstDN =0
+secondDN =0
+finalN=0
+
+firstDC =0
+secondDC =0
+finalC =0
+
+
+firstLN =0
+secondLN =0
+thirdLN =0
+fourthLN =0
+
+firstLC =0
+secondLC =0
+thirdLC =0
+fourthLC =0
+
 Nres = "PASS"
 Cres = "PASS"
 NLin= "MISS"
@@ -117,15 +147,55 @@ for (row in 1:nrow(flux)) {
   vectorN <- c(vectorN, flux[row, "N20Conc"])
   vectorC <- c(vectorC, flux[row, "CH4Conc"])
   
-  if ( counter ==0 ){
-    leftboundN = flux[row, "N20Conc"]
-    leftboundC = flux[row, "CH4Conc"]
+  if ( counter == 0 ){
+    n1 = flux[row, "N20Conc"]
+    c1 = flux[row, "CH4Conc"]
+    
+    
 
   }
   
+  if ( counter == 1 ){
+    
+    n2 = flux[row, "N20Conc"]
+    c2 = flux[row, "CH4Conc"]
+    
+    firstDN = abs( n1 - n2)
+    firstDC = abs( c1 - c2)
+    
+    if(firstDN <0.000183){
+      print("FAIL")
+    }
+    if(firstDC <0.000183){
+      print("FAIL")
+    }
+    
+  }
+  
+  if ( counter == 2 ){
+    
+    n3 = flux[row, "N20Conc"]
+    c3 = flux[row, "CH4Conc"]
+    
+    secondDN = abs( n1 - n3)
+    secondDC = abs( c1 - c3)
+    
+    if(secondDN <0.000183){
+      print("FAIL")
+    }
+    if(secondDC <0.000183){
+      print("FAIL")
+    }
+    
+  }
+  
   if ( counter ==3 ){
-    finalN = abs( leftboundN - flux[row, "N20Conc"])
-    finalC = abs( leftboundC - flux[row, "CH4Conc"])
+    n4 = flux[row, "N20Conc"]
+    c4 = flux[row, "CH4Conc"]
+    
+    finalN = abs( n1 - n4)
+    finalC = abs( c1 - c4)
+    
     if(finalN <0.000183){
      Nres ="FAIL"
      Ngrad=0
@@ -140,8 +210,39 @@ for (row in 1:nrow(flux)) {
     
     counter =0
     
-    Nrsq<-  summary(lm(vectorN~time))$r.squared
-    Crsq<-  summary(lm(vectorC~time))$r.squared
+    setoneN <- c( n2,n3,n4)
+    setoneC <- c( c2,c3,c4)
+    
+    settwoN <- c( n1,n3,n4)
+    settwoC <- c( c1,c3,c4)
+    
+    
+    setthreeN <- c( n1,n2,n4)
+    setthreeC <- c( c1,c2,c4)
+    
+    setfourN <- c( n1,n2,n3)
+    setfourC <- c( c1,c2,c3)
+    
+    Nrsq1<-  summary(lm(setoneN~time))$r.squared
+    Crsq1<-  summary(lm(setoneC~time))$r.squared
+    
+    Nrsq2<-  summary(lm(settwoN~time))$r.squared
+    Crsq2<-  summary(lm(settwoC~time))$r.squared
+    
+    Nrsq3<-  summary(lm(setthreeN~time))$r.squared
+    Crsq3<-  summary(lm(setthreeC~time))$r.squared
+    
+    Nrsq4<-  summary(lm(setfourN~time))$r.squared
+    Crsq4<-  summary(lm(setfourC~time))$r.squared
+    
+    Nrsq5<-  summary(lm(vectorN~time))$r.squared
+    Crsq5<-  summary(lm(vectorC~time))$r.squared
+    
+    
+    Nrsqs <- c(Nrsq1,Nrsq2,Nrsq3,Nrsq4,Nrsq5)
+    Crsqs <- c(Crsq1,Crsq2,Crsq3,Crsq4,Crsq5)
+    MaxrsqN <- max(Nrsqs)
+    MaxrsqC <- max(Crsqs)
     
     Ngrad <-coef(lm(vectorN~time))[2]
     Cgrad <-coef(lm(vectorC~time))[2]
