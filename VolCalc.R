@@ -74,7 +74,7 @@ CH4_Vol <-(((760*22.4)*(273+CH4_Output))/(760*273))
 CH4_Conc <- ((CH4_Output/CH4_Vol*(0.016043)))
 
 
-              
+
 df_out <- cbind(df2, CH4_Output,N2O_Output,N2O_Vol,N2O_Conc,CH4_Vol,CH4_Conc)
 
 colnames(df_out)[27] <- "CH4_Output"
@@ -104,36 +104,6 @@ results = data.frame(matrix(ncol = 12, nrow = 0))
 colnames(results) = c("Plot","Date","N20Detection","CH4Detection","N20_Rsq","CH4_Rsq","N20_Linearity","CH4_Linearity","N20_Slope","CH4_Slope","N20_Flux","CH4_Flux")
 leftboundN = 0 
 leftboundC = 0 
-
-n1=0
-n2=0
-n3=0
-n4=0
-
-c1=0
-c2=0
-c3=0
-c4=0
-
-firstDN =0
-secondDN =0
-finalN=0
-
-firstDC =0
-secondDC =0
-finalC =0
-
-
-firstLN =0
-secondLN =0
-thirdLN =0
-fourthLN =0
-
-firstLC =0
-secondLC =0
-thirdLC =0
-fourthLC =0
-
 Nres = "PASS"
 Cres = "PASS"
 NLin= "MISS"
@@ -141,159 +111,206 @@ CLin ="MISS"
 vectorN <- c()
 vectorC <- c()
 
+DetectionBoolN = FALSE
+DetectionBoolC = FALSE
+
+
 time <- c(0,21,42,63)
 
 for (row in 1:nrow(flux)) {
+  
   vectorN <- c(vectorN, flux[row, "N20Conc"])
   vectorC <- c(vectorC, flux[row, "CH4Conc"])
   
-  if ( counter == 0 ){
-    n1 = flux[row, "N20Conc"]
-    c1 = flux[row, "CH4Conc"]
+  
+  if ( counter ==0 ){
+    leftboundN = flux[row, "N20Conc"]
+    leftboundC = flux[row, "CH4Conc"]
     
-    
-
   }
   
+  # Detection Test for 0,21
   if ( counter == 1 ){
-    
-    n2 = flux[row, "N20Conc"]
-    c2 = flux[row, "CH4Conc"]
-    
-    firstDN = abs( n1 - n2)
-    firstDC = abs( c1 - c2)
-    
-    if(firstDN <0.000183){
-      print("FAIL")
+    N21 = abs( leftboundN - flux[row, "N20Conc"])
+    C21 = abs( leftboundC - flux[row, "CH4Conc"])
+    if(N21 <0.000183){
+      DetectionBoolN= TRUE
     }
-    if(firstDC <0.000183){
-      print("FAIL")
+    if(C21 <0.000183){
+      DetectionBoolC= TRUE
     }
     
   }
   
+  # Detection Test for 0,42
   if ( counter == 2 ){
+    N42 = abs( leftboundN - flux[row, "N20Conc"])
+    C42 = abs( leftboundC - flux[row, "CH4Conc"])
     
-    n3 = flux[row, "N20Conc"]
-    c3 = flux[row, "CH4Conc"]
-    
-    secondDN = abs( n1 - n3)
-    secondDC = abs( c1 - c3)
-    
-    if(secondDN <0.000183){
-      print("FAIL")
+    if(N42 <0.000183){
+      DetectionBoolN= TRUE
     }
-    if(secondDC <0.000183){
-      print("FAIL")
+    if(C42 <0.000183){
+      DetectionBoolC= TRUE
     }
     
   }
   
+  
+  # Detection Test for 0,63
   if ( counter ==3 ){
-    n4 = flux[row, "N20Conc"]
-    c4 = flux[row, "CH4Conc"]
-    
-    finalN = abs( n1 - n4)
-    finalC = abs( c1 - c4)
-    
+    finalN = abs( leftboundN - flux[row, "N20Conc"])
+    finalC = abs( leftboundC - flux[row, "CH4Conc"])
     if(finalN <0.000183){
-     Nres ="FAIL"
-     Ngrad=0
+      DetectionBoolN= TRUE
     }
     if(finalC <0.000183){
-      Cres ="FAIL"
-      Cgrad=0
+      DetectionBoolC= TRUE
     }
     
-     
+  
     
     
     counter =0
     
-    setoneN <- c( n2,n3,n4)
-    setoneC <- c( c2,c3,c4)
+    #4 Point Linearity Test
     
-    settwoN <- c( n1,n3,n4)
-    settwoC <- c( c1,c3,c4)
-    
-    
-    setthreeN <- c( n1,n2,n4)
-    setthreeC <- c( c1,c2,c4)
-    
-    setfourN <- c( n1,n2,n3)
-    setfourC <- c( c1,c2,c3)
-    
-    Nrsq1<-  summary(lm(setoneN~time))$r.squared
-    Crsq1<-  summary(lm(setoneC~time))$r.squared
-    
-    Nrsq2<-  summary(lm(settwoN~time))$r.squared
-    Crsq2<-  summary(lm(settwoC~time))$r.squared
-    
-    Nrsq3<-  summary(lm(setthreeN~time))$r.squared
-    Crsq3<-  summary(lm(setthreeC~time))$r.squared
-    
-    Nrsq4<-  summary(lm(setfourN~time))$r.squared
-    Crsq4<-  summary(lm(setfourC~time))$r.squared
-    
-    Nrsq5<-  summary(lm(vectorN~time))$r.squared
-    Crsq5<-  summary(lm(vectorC~time))$r.squared
-    
-    
-    Nrsqs <- c(Nrsq1,Nrsq2,Nrsq3,Nrsq4,Nrsq5)
-    Crsqs <- c(Crsq1,Crsq2,Crsq3,Crsq4,Crsq5)
-    MaxrsqN <- max(Nrsqs)
-    MaxrsqC <- max(Crsqs)
+    Nrsq<-  summary(lm(vectorN~time))$r.squared
+    Crsq<-  summary(lm(vectorC~time))$r.squared
     
     Ngrad <-coef(lm(vectorN~time))[2]
     Cgrad <-coef(lm(vectorC~time))[2]
     
+    
     if(Nrsq >0.845){
       NLin ="LIN"
     }else{
-      NLin ="MISS"
-      Ngrad=0
+      #If 4pt Lin test fail
+      #START 3 POINT LINEARITY TEST
+      
+      #0,1,2
+      
+      vectorN1 <- vectorN[-c(4)]
+      time1 <- time[-c(4)]
+      Nrsq1<-  summary(lm(vectorN1~time1))$r.squared
+      Ngrad1 <- coef(lm(vectorN1~time1))
+     
+      
+      #1,2,3
+      vectorN2 <- vectorN[-c(1)]
+      time2 <- time[-c(1)]
+      Nrsq2<-  summary(lm(vectorN2~time2))$r.squared
+      Ngrad2 <- coef(lm(vectorN2~time2))
+      
+      #0,1,3
+      vectorN3 <- vectorN[-c(2)]
+      time3 <- time[-c(2)]
+      Nrsq3<-  summary(lm(vectorN3~time3))$r.squared
+      Ngrad3 <- coef(lm(vectorN3~time3))
+      
+      #0,2,3
+      
+      vectorN4 <- vectorN[-c(3)]
+      time4 <- time[-c(3)]
+      Nrsq4<-  summary(lm(vectorN4~time4))$r.squared
+      Ngrad4 <- coef(lm(vectorN4~time4))
+      
+      
+      
+      Nrsqs <- c(Nrsq1,Nrsq2,Nrsq3,Nrsq4)
+      MaxrsqN <- max(Nrsqs)
+      
+      if(MaxrsqN > 0.8545){
+        NLin= "LIN"
+      }else{
+        NLin ="MISS"
+        Ngrad=0
+      }
+      
     }
     if(Crsq >0.845){
       CLin ="LIN"
     }else{
-      CLin ="MISS"
-      Cgrad=0
+      #START 3 POINT LINEARITY TEST
+      
+      #0,1,2
+      
+      vectorC1 <- vectorC[-c(4)]
+      time1 <- time[-c(4)]
+      Crsq1<-  summary(lm(vectorC1~time1))$r.squared
+      
+      
+      #1,2,3
+      vectorC2 <- vectorC[-c(1)]
+      time2 <- time[-c(1)]
+      Crsq2<-  summary(lm(vectorC2~time2))$r.squared
+      
+      #0,1,3
+      vectorC3 <- vectorC[-c(2)]
+      time3 <- time[-c(2)]
+      Crsq3<-  summary(lm(vectorC3~time3))$r.squared
+      
+      #0,2,3
+      
+      vectorC4 <- vectorC[-c(3)]
+      time4 <- time[-c(3)]
+      Crsq4<-  summary(lm(vectorC4~time4))$r.squared
+      
+      
+      
+      Crsqs <- c(Crsq1,Crsq2,Crsq3,Crsq4)
+      MaxrsqC <- max(Crsqs)
+      
+      if(MaxrsqC > 0.8545){
+        CLin= "LIN"
+      }else{
+        CLin ="MISS"
+        Cgrad=0
+      }
     }
     
     plotno <- flux[row, "Plot"]
     dateno <- format(flux[row, "Date"])
-   
+    
     volumeratio <-flux[row,"VolumeRatio"]
     
     
-  
-   
-  
+    
+    if (DetectionBoolN == TRUE){
+      Ngrad =0
+    }
+    
+    if (DetectionBoolC == TRUE){
+      Cgrad=0
+    }
+    
     Cflux <- Cgrad*volumeratio*240*60
     Nflux <- Ngrad*volumeratio*240*60
     
     
-
+    
     results[nrow(results) + 1,] = c(plotno,dateno,Nres,Cres,Nrsq,Crsq,NLin,CLin,Ngrad,Cgrad,Nflux,Cflux)
-
-    
-    
-  
     
     
     
- 
-
+    
+    
+    
+    
+    
+    
     vectorN <- c()
     vectorC <- c()
+    DetectionBoolN= FALSE
+    DetectionBoolC= FALSE
     
   }else{
     counter = counter + 1
     
   }
   
-
-
+  
+  
   
   
   
@@ -307,7 +324,6 @@ for (row in 1:nrow(flux)) {
 
 
 write_xlsx(results,file.path(getwd(), "Results.xlsx"))
-
 
 
 
