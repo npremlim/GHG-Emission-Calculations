@@ -67,10 +67,10 @@ abline(b = 1, a = 0)
 
 #volume and concentration calculations 
 
-N2O_Vol <-(((760*22.4)*(273+N2O_Output))/(760*273))
+N2O_Vol <-(((760*22.4)*(273+df$Chamber_Temp_C))/(760*273))
 N2O_Conc <- ((N2O_Output/N2O_Vol*(0.044014)))
 
-CH4_Vol <-(((760*22.4)*(273+CH4_Output))/(760*273))
+CH4_Vol <-(((760*22.4)*(273+df$Chamber_Temp_C))/(760*273))
 CH4_Conc <- ((CH4_Output/CH4_Vol*(0.016043)))
 
 
