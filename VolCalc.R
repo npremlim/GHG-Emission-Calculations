@@ -4,18 +4,13 @@ library(readxl)
 args = commandArgs(trailingOnly=TRUE)
 
 #init file
-
 #data <- read.table(file =args[1], header = FALSE,sep=',')
-#print(data)
-
 
 files <- c(list.files (path = file.path(getwd(), "/ImportFiles")))
 
 
 batch <- 1
 for (rowname in files) {
-  
-  
   newdir <- paste0("ImportFiles/",rowname)
   print(file.path(getwd(), newdir))
   df <- read_excel(file.path(getwd(), newdir))
@@ -28,16 +23,12 @@ for (rowname in files) {
   ChamberVolL <- ChamberVolCm3/1000
   BaseAreaM3 <- baseArea/10000
   VolAreaRatio <- ChamberVolL /BaseAreaM3 
-  
-  
   df2 <- cbind(df,headspace_mean,extension_cm,chamber_Height, ChamberVolCm3,ChamberVolL,baseArea,BaseAreaM3,VolAreaRatio)
   
   colnames(df2)<- c("Std_CH4_Peak","Std_N2O_Peak","Std_CH4_PPM","Std_N2O_PPM","CH4_Sample_Peak","N2O_Sample_Peak","Sample_Type","GC_Run","Date","Plot","Time","Chamber_Temp_C","Headspace1_cm","Headspace2_cm","Headspace3_cm","Headspace4_cm","Extension_ft","Chamber_Radius","HeadspaceMean_cm","Extension_cm","Chamber_Height","Total_Volume_cm3","Total_Volume_L","Base_Area","Base_Area_m3","VolumeRatio")
   
   
   ##write_xlsx(df2,file.path(getwd(), "VolumeExport.xlsx"))
-  
-
   #generating linear relation
   CH4model <- lm(formula =Std_CH4_PPM ~ Std_CH4_Peak, data=df)
   N2Omodel <- lm(formula =Std_N2O_PPM ~ Std_N2O_Peak, data=df)
