@@ -8,14 +8,14 @@ args = commandArgs(trailingOnly=TRUE)
 #data <- read.table(file =args[1], header = FALSE,sep=',')
 
 files <- c(list.files (path = file.path(getwd(), "ImportFiles")))
-
+print( length(files))
 
 batch <- 1
 for (rowname in files) {
   
-  newdir <- paste0("ImportFiles\\",rowname)
-  print(file.path(getwd(), newdir))
-  df <- read_excel(file.path(getwd(), newdir))
+
+  print(file.path(getwd(),"ImportFiles",rowname))
+  df <- read_excel(file.path(getwd(), "ImportFiles",rowname))
   headspace_mean <- rowMeans(df[,c("Headspace1_cm", "Headspace2_cm","Headspace3_cm","Headspace4_cm")], na.rm=TRUE)
   extension_cm <- df$Extension_ft*30.48
   chamber_Height<- extension_cm+7.62+headspace_mean 
@@ -355,9 +355,9 @@ for (rowname in files) {
   
 
   
-  exportdir <- paste0("Exports\\","Results",batch,".xlsx")
-  
-  write_xlsx(results,file.path(getwd(), exportdir))
+
+  name <- paste0("Results",batch,".xlsx")
+  write_xlsx(results,file.path(getwd(), "Exports",name))
   
   
   
