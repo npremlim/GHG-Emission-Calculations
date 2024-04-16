@@ -13,7 +13,7 @@ files <- c(list.files (path = file.path(getwd(), "ImportFiles")))
 batch <- 1
 for (rowname in files) {
   
-  newdir <- paste0("ImportFiles/",rowname)
+  newdir <- paste0("ImportFiles\\",rowname)
   print(file.path(getwd(), newdir))
   df <- read_excel(file.path(getwd(), newdir))
   headspace_mean <- rowMeans(df[,c("Headspace1_cm", "Headspace2_cm","Headspace3_cm","Headspace4_cm")], na.rm=TRUE)
@@ -355,7 +355,7 @@ for (rowname in files) {
   
 
   
-  exportdir <- paste0("Exports/","Results",batch,".xlsx")
+  exportdir <- paste0("Exports\\","Results",batch,".xlsx")
   
   write_xlsx(results,file.path(getwd(), exportdir))
   
