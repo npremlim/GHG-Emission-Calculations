@@ -1,16 +1,18 @@
 library(writexl)
 library(openxlsx)
 library(readxl)
+print("hello")
 args = commandArgs(trailingOnly=TRUE)
 
 #init file
 #data <- read.table(file =args[1], header = FALSE,sep=',')
 
-files <- c(list.files (path = file.path(getwd(), "/ImportFiles")))
+files <- c(list.files (path = file.path(getwd(), "ImportFiles")))
 
 
 batch <- 1
 for (rowname in files) {
+  
   newdir <- paste0("ImportFiles/",rowname)
   print(file.path(getwd(), newdir))
   df <- read_excel(file.path(getwd(), newdir))
@@ -26,7 +28,6 @@ for (rowname in files) {
   df2 <- cbind(df,headspace_mean,extension_cm,chamber_Height, ChamberVolCm3,ChamberVolL,baseArea,BaseAreaM3,VolAreaRatio)
   
   colnames(df2)<- c("Std_CH4_Peak","Std_N2O_Peak","Std_CH4_PPM","Std_N2O_PPM","CH4_Sample_Peak","N2O_Sample_Peak","Sample_Type","GC_Run","Date","Plot","Time","Chamber_Temp_C","Headspace1_cm","Headspace2_cm","Headspace3_cm","Headspace4_cm","Extension_ft","Chamber_Radius","HeadspaceMean_cm","Extension_cm","Chamber_Height","Total_Volume_cm3","Total_Volume_L","Base_Area","Base_Area_m3","VolumeRatio")
-  
   
   ##write_xlsx(df2,file.path(getwd(), "VolumeExport.xlsx"))
   #generating linear relation
