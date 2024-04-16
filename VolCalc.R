@@ -355,9 +355,10 @@ for (rowname in files) {
   
 
   
-
-  name <- paste0("Results",batch,".xlsx")
-  write_xlsx(results,file.path(getwd(), "Exports",name))
+  rowname<- tools::file_path_sans_ext(rowname)
+  print(rowname)
+  name <- paste0(rowname, "_results", ".xlsx")
+  write_xlsx(results,file.path(getwd(),"Results", name))
   
   
   
